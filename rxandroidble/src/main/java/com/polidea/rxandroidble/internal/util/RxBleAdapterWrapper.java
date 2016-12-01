@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothDevice;
 import android.support.annotation.Nullable;
 
 import java.util.Set;
+import java.util.UUID;
 
 public class RxBleAdapterWrapper {
 
@@ -28,6 +29,10 @@ public class RxBleAdapterWrapper {
 
     public boolean startLeScan(BluetoothAdapter.LeScanCallback leScanCallback) {
         return bluetoothAdapter.startLeScan(leScanCallback);
+    }
+
+    public boolean startLeScan(UUID[] serviceUuids, BluetoothAdapter.LeScanCallback leScanCallback) {
+        return bluetoothAdapter.startLeScan(serviceUuids, leScanCallback);
     }
 
     public void stopLeScan(BluetoothAdapter.LeScanCallback leScanCallback) {

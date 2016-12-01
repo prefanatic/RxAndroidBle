@@ -38,7 +38,9 @@ public class RxBleRadioOperationScan extends RxBleRadioOperation<RxBleInternalSc
     protected void protectedRun() {
 
         try {
-            boolean startLeScanStatus = rxBleAdapterWrapper.startLeScan(leScanCallback);
+            boolean startLeScanStatus = hasDefinedFilter()
+                    ? rxBleAdapterWrapper.startLeScan(filterServiceUUIDs, leScanCallback)
+                    : rxBleAdapterWrapper.startLeScan(leScanCallback);
 
             if (!startLeScanStatus) {
                 onError(new BleScanException(BleScanException.BLUETOOTH_CANNOT_START));
