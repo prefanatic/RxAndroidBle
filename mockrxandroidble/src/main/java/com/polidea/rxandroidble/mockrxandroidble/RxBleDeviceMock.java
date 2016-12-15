@@ -1,6 +1,7 @@
 package com.polidea.rxandroidble.mockrxandroidble;
 
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGattCharacteristic;
 import android.content.Context;
 
 import com.polidea.rxandroidble.RxBleConnection;
@@ -16,17 +17,19 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import rx.Observable;
 import rx.subjects.BehaviorSubject;
+import rx.subjects.PublishSubject;
 
 import static com.polidea.rxandroidble.RxBleConnection.RxBleConnectionState.CONNECTED;
 import static com.polidea.rxandroidble.RxBleConnection.RxBleConnectionState.CONNECTING;
 import static com.polidea.rxandroidble.RxBleConnection.RxBleConnectionState.DISCONNECTED;
 
-class RxBleDeviceMock implements RxBleDevice {
+public class RxBleDeviceMock implements RxBleDevice {
 
     private RxBleConnection rxBleConnection;
     private BehaviorSubject<RxBleConnection.RxBleConnectionState> connectionStateBehaviorSubject = BehaviorSubject.create(
             DISCONNECTED
     );
+    private PublishSubject<BluetoothGattCharacteristic> characteristicChangedPublishSubject = PublishSubject.create();
     private String name;
     private String macAddress;
     private Integer rssi;
@@ -44,10 +47,15 @@ class RxBleDeviceMock implements RxBleDevice {
         this.macAddress = macAddress;
         this.rxBleConnection = new RxBleConnectionMock(rxBleDeviceServices,
                 rssi,
-                characteristicNotificationSources);
+                characteristicNotificationSources,
+                characteristicChangedPublishSubject);
         this.rssi = rssi;
         this.scanRecord = scanRecord;
         this.advertisedUUIDs = new ArrayList<>();
+    }
+
+    public Observable<BluetoothGattCharacteristic> observeCharacteristicChanges() {
+        return characteristicChangedPublishSubject.asObservable();
     }
 
     public void addAdvertisedUUID(UUID advertisedUUID) {

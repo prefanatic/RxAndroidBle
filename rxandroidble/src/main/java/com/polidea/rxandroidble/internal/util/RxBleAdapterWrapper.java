@@ -4,15 +4,22 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.support.annotation.Nullable;
 
+import java.util.List;
 import java.util.Set;
-import java.util.UUID;
+
+import no.nordicsemi.android.support.v18.scanner.BluetoothLeScannerCompat;
+import no.nordicsemi.android.support.v18.scanner.ScanCallback;
+import no.nordicsemi.android.support.v18.scanner.ScanFilter;
+import no.nordicsemi.android.support.v18.scanner.ScanSettings;
 
 public class RxBleAdapterWrapper {
 
     private final BluetoothAdapter bluetoothAdapter;
+    private final BluetoothLeScannerCompat scanner;
 
     public RxBleAdapterWrapper(@Nullable BluetoothAdapter bluetoothAdapter) {
         this.bluetoothAdapter = bluetoothAdapter;
+        this.scanner = BluetoothLeScannerCompat.getScanner();
     }
 
     public BluetoothDevice getRemoteDevice(String macAddress) {
@@ -27,16 +34,14 @@ public class RxBleAdapterWrapper {
         return bluetoothAdapter != null && bluetoothAdapter.isEnabled();
     }
 
-    public boolean startLeScan(BluetoothAdapter.LeScanCallback leScanCallback) {
-        return bluetoothAdapter.startLeScan(leScanCallback);
+    public void startLeScan(List<ScanFilter> filters, ScanSettings settings,
+                       ScanCallback scanCallback) {
+
+        scanner.startScan(filters, settings, scanCallback);
     }
 
-    public boolean startLeScan(UUID[] serviceUuids, BluetoothAdapter.LeScanCallback leScanCallback) {
-        return bluetoothAdapter.startLeScan(serviceUuids, leScanCallback);
-    }
-
-    public void stopLeScan(BluetoothAdapter.LeScanCallback leScanCallback) {
-        bluetoothAdapter.stopLeScan(leScanCallback);
+    public void stopLeScan(ScanCallback scanCallback) {
+        scanner.stopScan(scanCallback);
     }
 
     public Set<BluetoothDevice> getBondedDevices() {

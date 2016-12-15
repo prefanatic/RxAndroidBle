@@ -5,7 +5,6 @@ import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.location.LocationManager;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 
 import com.polidea.rxandroidble.RxBleAdapterStateObservable.BleAdapterState;
 import com.polidea.rxandroidble.exceptions.BleScanException;
@@ -21,12 +20,15 @@ import com.polidea.rxandroidble.internal.util.UUIDUtil;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import no.nordicsemi.android.support.v18.scanner.ScanFilter;
+import no.nordicsemi.android.support.v18.scanner.ScanSettings;
 import rx.Observable;
 import rx.Scheduler;
 import rx.schedulers.Schedulers;
@@ -101,8 +103,7 @@ class RxBleClientImpl extends RxBleClient {
     }
 
     @Override
-    public Observable<RxBleScanResult> scanBleDevices(@Nullable UUID... filterServiceUUIDs) {
-
+    public Observable<RxBleScanResult> scanBleDevices(List<ScanFilter> filters, ScanSettings settings) {
         if (!rxBleAdapterWrapper.hasBluetoothAdapter()) {
             return Observable.error(new BleScanException(BleScanException.BLUETOOTH_NOT_AVAILABLE));
         } else if (!rxBleAdapterWrapper.isBluetoothEnabled()) {
@@ -112,22 +113,23 @@ class RxBleClientImpl extends RxBleClient {
         } else if (checkIfLocationAccessIsEnabledIfRequired()) {
             return Observable.error(new BleScanException(BleScanException.LOCATION_SERVICES_DISABLED));
         } else {
-            return initializeScan(filterServiceUUIDs);
+            return initializeScan(filters, settings);
         }
     }
 
-    private Observable<RxBleScanResult> initializeScan(@Nullable UUID[] filterServiceUUIDs) {
-        final Set<UUID> filteredUUIDs = uuidUtil.toDistinctSet(filterServiceUUIDs);
+    private Observable<RxBleScanResult> initializeScan(List<ScanFilter> filters, ScanSettings settings) {
 
         synchronized (queuedScanOperations) {
-            Observable<RxBleScanResult> matchingQueuedScan = queuedScanOperations.get(filteredUUIDs);
+            /*//Observable<RxBleScanResult> matchingQueuedScan = queuedScanOperations.get(filteredUUIDs);
 
-            if (matchingQueuedScan == null) {
+            //if (matchingQueuedScan == null) {
                 matchingQueuedScan = createScanOperation(filterServiceUUIDs);
-                queuedScanOperations.put(filteredUUIDs, matchingQueuedScan);
-            }
+                //queuedScanOperations.put(filteredUUIDs, matchingQueuedScan);
+            //}
 
-            return matchingQueuedScan;
+            return matchingQueuedScan;*/
+
+            return createScanOperation(filters, settings);
         }
     }
 
@@ -152,15 +154,16 @@ class RxBleClientImpl extends RxBleClient {
         return new RxBleScanResult(bleDevice, scanResult.getRssi(), scanResult.getScanRecord());
     }
 
-    private Observable<RxBleScanResult> createScanOperation(@Nullable UUID[] filterServiceUUIDs) {
-        final Set<UUID> filteredUUIDs = uuidUtil.toDistinctSet(filterServiceUUIDs);
-        final RxBleRadioOperationScan scanOperation = new RxBleRadioOperationScan(filterServiceUUIDs, rxBleAdapterWrapper, uuidUtil);
+    private Observable<RxBleScanResult> createScanOperation(List<ScanFilter> filters, ScanSettings settings) {
+        //final Set<UUID> filteredUUIDs = uuidUtil.toDistinctSet(filterServiceUUIDs);
+        //final RxBleRadioOperationScan scanOperation = new RxBleRadioOperationScan(filterServiceUUIDs, rxBleAdapterWrapper, uuidUtil);
+        final RxBleRadioOperationScan scanOperation = new RxBleRadioOperationScan(filters, settings);
         return rxBleRadio.queue(scanOperation)
                 .doOnUnsubscribe(() -> {
 
                     synchronized (queuedScanOperations) {
                         scanOperation.stop();
-                        queuedScanOperations.remove(filteredUUIDs);
+                        //queuedScanOperations.remove(filteredUUIDs);
                     }
                 })
                 .mergeWith(bluetoothAdapterOffExceptionObservable())

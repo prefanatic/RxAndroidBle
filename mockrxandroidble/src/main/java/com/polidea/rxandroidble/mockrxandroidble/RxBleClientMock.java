@@ -19,6 +19,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import no.nordicsemi.android.support.v18.scanner.ScanFilter;
+import no.nordicsemi.android.support.v18.scanner.ScanSettings;
 import rx.Observable;
 
 /**
@@ -267,8 +269,8 @@ public class RxBleClientMock extends RxBleClient {
     }
 
     @Override
-    public Observable<RxBleScanResult> scanBleDevices(@Nullable UUID... filterServiceUUIDs) {
-        return createScanOperation(filterServiceUUIDs);
+    public Observable<RxBleScanResult> scanBleDevices(List<ScanFilter> filters, ScanSettings settings) {
+        return createScanOperation(scanFiltersToUUIDs(filters));
     }
 
     private RxBleScanResult convertToPublicScanResult(RxBleDevice bleDevice, Integer rssi, byte[] scanRecord) {
@@ -283,6 +285,16 @@ public class RxBleClientMock extends RxBleClient {
                     RxBleDeviceMock rxBleDeviceMock = (RxBleDeviceMock) rxBleDevice;
                     return convertToPublicScanResult(rxBleDeviceMock, rxBleDeviceMock.getRssi(), rxBleDeviceMock.getScanRecord());
                 }));
+    }
+
+    private UUID[] scanFiltersToUUIDs(List<ScanFilter> filters) {
+        UUID[] filterServiceUUUIDs = new UUID[filters.size()];
+
+        for (int i = 0; i < filters.size(); i++) {
+            filterServiceUUUIDs[i] = filters.get(i).getServiceUuid().getUuid();
+        }
+
+        return filterServiceUUUIDs;
     }
 
     private boolean filterDevice(RxBleDevice rxBleDevice, @Nullable UUID[] filterServiceUUIDs) {
