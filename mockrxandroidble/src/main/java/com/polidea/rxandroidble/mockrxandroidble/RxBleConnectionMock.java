@@ -3,6 +3,7 @@ package com.polidea.rxandroidble.mockrxandroidble;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.support.annotation.NonNull;
+import android.text.BoringLayout;
 
 import com.polidea.rxandroidble.NotificationSetupMode;
 import com.polidea.rxandroidble.RxBleConnection;
@@ -24,6 +25,7 @@ import rx.Observable;
 import rx.functions.Action0;
 import rx.functions.Actions;
 import rx.functions.Func1;
+import rx.subjects.Subject;
 
 import static rx.Observable.just;
 
@@ -51,14 +53,17 @@ public class RxBleConnectionMock implements RxBleConnection {
     private int rssi;
     private int currentMtu = 23;
     private Map<UUID, Observable<byte[]>> characteristicNotificationSources;
+    private Subject<BluetoothGattCharacteristic, BluetoothGattCharacteristic> characteristicSubject;
 
 
     public RxBleConnectionMock(RxBleDeviceServices rxBleDeviceServices,
                                int rssi,
-                               Map<UUID, Observable<byte[]>> characteristicNotificationSources) {
+                               Map<UUID, Observable<byte[]>> characteristicNotificationSources,
+                               Subject<BluetoothGattCharacteristic, BluetoothGattCharacteristic> characteristicSubject) {
         this.rxBleDeviceServices = rxBleDeviceServices;
         this.rssi = rssi;
         this.characteristicNotificationSources = characteristicNotificationSources;
+        this.characteristicSubject = characteristicSubject;
     }
 
     @Override
@@ -253,6 +258,7 @@ public class RxBleConnectionMock implements RxBleConnection {
                 .map(new Func1<BluetoothGattCharacteristic, Boolean>() {
                     @Override
                     public Boolean call(BluetoothGattCharacteristic characteristic) {
+                        characteristicSubject.onNext(characteristic);
                         return characteristic.setValue(bluetoothGattCharacteristic.getValue());
                     }
                 })
@@ -266,6 +272,7 @@ public class RxBleConnectionMock implements RxBleConnection {
 
     @Override
     public Observable<byte[]> writeCharacteristic(@NonNull BluetoothGattCharacteristic bluetoothGattCharacteristic, @NonNull byte[] data) {
+        characteristicSubject.onNext(bluetoothGattCharacteristic);
         bluetoothGattCharacteristic.setValue(data);
 
         return Observable.just(data);
@@ -367,6 +374,7 @@ public class RxBleConnectionMock implements RxBleConnection {
                 .map(new Func1<BluetoothGattCharacteristic, Boolean>() {
                     @Override
                     public Boolean call(BluetoothGattCharacteristic characteristic) {
+                        characteristicSubject.onNext(characteristic);
                         return characteristic.setValue(data);
                     }
                 })

@@ -1,6 +1,7 @@
 package com.polidea.rxandroidble.mockrxandroidble;
 
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGattCharacteristic;
 import android.content.Context;
 
 import com.polidea.rxandroidble.RxBleConnection;
@@ -19,6 +20,8 @@ import rx.functions.Action0;
 import rx.functions.Action1;
 import rx.functions.Func0;
 import rx.subjects.BehaviorSubject;
+import rx.subjects.PublishSubject;
+import rx.subjects.Subject;
 
 import static com.polidea.rxandroidble.RxBleConnection.RxBleConnectionState.CONNECTED;
 import static com.polidea.rxandroidble.RxBleConnection.RxBleConnectionState.CONNECTING;
@@ -30,6 +33,7 @@ public class RxBleDeviceMock implements RxBleDevice {
     private BehaviorSubject<RxBleConnection.RxBleConnectionState> connectionStateBehaviorSubject = BehaviorSubject.create(
             DISCONNECTED
     );
+    private PublishSubject<BluetoothGattCharacteristic> characteristicPublishSubject = PublishSubject.create();
     private String name;
     private String macAddress;
     private Integer rssi;
@@ -47,7 +51,8 @@ public class RxBleDeviceMock implements RxBleDevice {
         this.macAddress = macAddress;
         this.rxBleConnection = new RxBleConnectionMock(rxBleDeviceServices,
                 rssi,
-                characteristicNotificationSources);
+                characteristicNotificationSources,
+                characteristicPublishSubject);
         this.rssi = rssi;
         this.scanRecord = scanRecord;
         this.advertisedUUIDs = new ArrayList<>();
@@ -102,6 +107,10 @@ public class RxBleDeviceMock implements RxBleDevice {
 
     public List<UUID> getAdvertisedUUIDs() {
         return advertisedUUIDs;
+    }
+
+    public Subject<BluetoothGattCharacteristic, BluetoothGattCharacteristic> observeCharacteristicChanges() {
+        return characteristicPublishSubject;
     }
 
     @Override
