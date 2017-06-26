@@ -258,13 +258,13 @@ public class RxBleConnectionMock implements RxBleConnection {
                 .map(new Func1<BluetoothGattCharacteristic, Boolean>() {
                     @Override
                     public Boolean call(BluetoothGattCharacteristic characteristic) {
-                        characteristicSubject.onNext(characteristic);
                         return characteristic.setValue(bluetoothGattCharacteristic.getValue());
                     }
                 })
                 .flatMap(new Func1<Boolean, Observable<? extends BluetoothGattCharacteristic>>() {
                     @Override
                     public Observable<? extends BluetoothGattCharacteristic> call(Boolean ignored) {
+                        characteristicSubject.onNext(bluetoothGattCharacteristic);
                         return Observable.just(bluetoothGattCharacteristic);
                     }
                 });
@@ -272,8 +272,8 @@ public class RxBleConnectionMock implements RxBleConnection {
 
     @Override
     public Observable<byte[]> writeCharacteristic(@NonNull BluetoothGattCharacteristic bluetoothGattCharacteristic, @NonNull byte[] data) {
-        characteristicSubject.onNext(bluetoothGattCharacteristic);
         bluetoothGattCharacteristic.setValue(data);
+        characteristicSubject.onNext(bluetoothGattCharacteristic);
 
         return Observable.just(data);
     }
@@ -374,8 +374,9 @@ public class RxBleConnectionMock implements RxBleConnection {
                 .map(new Func1<BluetoothGattCharacteristic, Boolean>() {
                     @Override
                     public Boolean call(BluetoothGattCharacteristic characteristic) {
+                        boolean success = characteristic.setValue(data);
                         characteristicSubject.onNext(characteristic);
-                        return characteristic.setValue(data);
+                        return success;
                     }
                 })
                 .flatMap(new Func1<Boolean, Observable<? extends byte[]>>() {
